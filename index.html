@@ -3,278 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TraceImpact - Real-Time Micro-Impact Tracking Platform</title>
+    <title>TraceImpact - Impact Engine</title>
     <style>
         :root {
             --bg-dark: #0f172a;
             --bg-card: #1e293b;
             --accent: #10b981;
-            --accent-glow: rgba(16, 185, 129, 0.2);
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
             --border: #334155;
-            --warning: #f59e0b;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header {
-            background-color: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .api-badge {
-            font-size: 0.75rem;
-            background-color: var(--accent-glow);
-            color: var(--accent);
-            padding: 0.25rem 0.6rem;
-            border-radius: 9999px;
-            border: 1px solid var(--accent);
-        }
-
-        main {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            width: 100%;
-            flex: 1;
-        }
-
-        .hero {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .hero h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .hero p {
-            color: var(--text-sub);
-            max-width: 600px;
-            margin: 0 auto 2rem;
-        }
-
-        .search-box {
-            display: flex;
-            max-width: 500px;
-            margin: 0 auto;
-            gap: 0.5rem;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            padding: 0.8rem 1rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-main);
-            outline: none;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--accent);
-        }
-
-        button {
-            padding: 0.8rem 1.5rem;
-            background-color: var(--accent);
-            color: #000;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        button:hover {
-            opacity: 0.9;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background-color: var(--border);
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 1rem 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background-color: var(--accent);
-            width: 0%;
-            transition: width 0.5s ease-in-out;
-        }
-
-        .stats-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: var(--text-sub);
-        }
-
-        .ad-banner {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(16, 185, 129, 0.1));
-            border: 1px dashed var(--warning);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-            margin: 2rem 0;
-            font-size: 0.9rem;
-            color: var(--warning);
-        }
-
-        footer {
-            border-top: 1px solid var(--border);
-            text-align: center;
-            padding: 1.5rem;
-            color: var(--text-sub);
-            font-size: 0.85rem;
-            margin-top: auto;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); padding: 2rem; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
+        .badge { background: rgba(16, 185, 129, 0.2); color: var(--accent); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--accent); }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem; }
+        .card-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 0.5rem; }
+        .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .progress-bg { width: 100%; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin: 0.8rem 0; }
+        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.4s; }
+        
+        #console-log { background: #000; color: #00ff00; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; margin-bottom: 2rem; max-height: 150px; overflow-y: auto; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">
-            <span>TraceImpact</span>
-        </div>
-        <div class="api-badge">GlobalGiving API Connected</div>
+        <div class="logo">TraceImpact</div>
+        <div class="badge" id="statusBadge">Connecting API...</div>
     </header>
 
-    <main>
-        <section class="hero">
-            <h1>Track Social Impact In Real-Time</h1>
-            <p>Parcel-style trajectory pipeline tracking for verified humanitarian projects worldwide.</p>
-            
-            <div class="search-box">
-                <input type="text" id="projectSearch" placeholder="Search live GlobalGiving projects or enter ID...">
-                <button onclick="handleSearch()">Track</button>
-            </div>
-        </section>
+    <h3 style="margin-bottom: 0.5rem; color: var(--text-sub);">System Diagnostics Log:</h3>
+    <div id="console-log">> Initializing TraceImpact Engine...<br></div>
 
-        <!-- Dynamic Contextual Ethical Ad Space -->
-        <div class="ad-banner">
-            📢 <strong>Ethical Ad Partner:</strong> EcoSolar Solutions — 100% of ad revenue on this node supports trace validation operations.
-        </div>
-
-        <h2 style="margin-top: 2rem;">Active Global Impact Projects</h2>
-        <div class="grid" id="projectsContainer">
-            <!-- Loading Indicator -->
-            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-sub);">
-                Connecting to GlobalGiving API pipeline...
-            </div>
-        </div>
-    </main>
-
-    <footer>
-        <p>&copy; 2026 TraceImpact Engine. Powered by GlobalGiving API Integration.</p>
-    </footer>
+    <h2 style="margin-top: 1rem;">Active Live Projects</h2>
+    <div class="grid" id="projectsContainer">
+        <div style="grid-column: 1 / -1; color: var(--text-sub);">Loading data feeds...</div>
+    </div>
 
     <script>
-        // CONFIGURATION: API Key Configured
-        const GLOBALGIVING_API_KEY = "34135ad6-dbad-46e2-b68c-e772304c861c";
-        const API_URL = `https://api.globalgiving.org/api/public/projectservice/all/projects/active?api_key=${GLOBALGIVING_API_KEY}`;
+        function logToScreen(msg) {
+            console.log(msg);
+            const logger = document.getElementById('console-log');
+            if (logger) {
+                logger.innerHTML += `> ${msg}<br>`;
+                logger.scrollTop = logger.scrollHeight;
+            }
+        }
 
-        let loadedProjects = [];
+        const API_KEY = "34135ad6-dbad-46e2-b68c-e772304c861c";
+        const DIRECT_URL = `https://api.globalgiving.org/api/public/projectservice/all/projects/active?api_key=${API_KEY}`;
+        const PROXY_URL = `https://api.allorigins.win/raw?url=` + encodeURIComponent(DIRECT_URL);
 
-        async function fetchLiveProjects() {
+        async function loadProjects() {
+            logToScreen("Fetching from GlobalGiving via CORS Proxy bridge...");
             const container = document.getElementById('projectsContainer');
-            
+            const badge = document.getElementById('statusBadge');
+
             try {
-                const response = await fetch(API_URL, {
-                    headers: {
-                        "Accept": "application/json"
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`API Connection Error: ${response.status}`);
-                }
-
-                const data = await response.json();
+                // Fetch via Proxy to bypass CORS lock completely
+                const response = await fetch(PROXY_URL);
+                if (!response.ok) throw new Error(`HTTP Status ${response.status}`);
                 
-                // Parse GlobalGiving JSON schema
-                if (data.projects && data.projects.project) {
-                    loadedProjects = Array.isArray(data.projects.project) 
-                        ? data.projects.project 
-                        : [data.projects.project];
-                    
-                    renderProjects(loadedProjects);
-                } else {
-                    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center;">No active projects returned.</div>`;
+                const data = await response.json();
+                logToScreen("API Data successfully received!");
+                
+                let rawList = data.projects && data.projects.project ? data.projects.project : [];
+                let projects = Array.isArray(rawList) ? rawList : [rawList];
+
+                if (projects.length === 0) {
+                    throw new Error("No projects found in API response.");
                 }
 
-            } catch (error) {
-                console.warn("Live API call fallback engaged:", error);
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; color: #ef4444; padding: 2rem;">
-                        <strong>API Data Sync Note:</strong> Unable to directly parse live endpoint output cross-origin. 
-                        Displaying local pipeline state.
-                    </div>
-                `;
+                badge.innerText = "Live API Active";
+                logToScreen(`Rendering ${projects.length} live project cards...`);
+                renderProjects(projects);
+
+            } catch (err) {
+                logToScreen(`API Notice: ${err.message}`);
+                logToScreen("Engaging high-availability local trace dataset...");
+                badge.innerText = "Demo Pipeline Mode";
+                badge.style.borderColor = "#f59e0b";
+                badge.style.color = "#f59e0b";
                 renderFallbackProjects();
             }
         }
@@ -283,33 +97,26 @@
             const container = document.getElementById('projectsContainer');
             container.innerHTML = '';
 
-            projects.slice(0, 9).forEach(project => {
-                const goal = project.goal || 10000;
-                const raised = project.funding || 0;
-                const percent = Math.min(Math.round((raised / goal) * 100), 100);
+            projects.slice(0, 9).forEach(p => {
+                const goal = p.goal || 10000;
+                const raised = p.funding || 0;
+                const pct = Math.min(Math.round((raised / goal) * 100), 100);
 
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `
-                    <div>
-                        <div class="card-header">
-                            <span style="font-size: 0.75rem; color: var(--accent); font-weight: 600;">GG-${project.id}</span>
-                            <span style="font-size: 0.75rem; color: var(--text-sub);">${project.country || 'Global'}</span>
-                        </div>
-                        <div class="card-title">${project.title}</div>
-                        <p style="font-size: 0.85rem; color: var(--text-sub); margin-top: 0.5rem; line-height: 1.4;">
-                            ${project.summary ? project.summary.substring(0, 110) + '...' : 'Verified micro-project tracking active.'}
-                        </p>
+                    <div class="card-header">
+                        <span>GG-${p.id || 'N/A'}</span>
+                        <span>${p.country || 'Global'}</span>
                     </div>
-
-                    <div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${percent}%;"></div>
-                        </div>
-                        <div class="stats-row">
-                            <span>$${Number(raised).toLocaleString()} raised</span>
-                            <span><strong>${percent}%</strong> Goal</span>
-                        </div>
+                    <div class="card-title">${p.title || 'Untitled Impact Project'}</div>
+                    <p style="font-size: 0.85rem; color: var(--text-sub);">${p.summary ? p.summary.substring(0, 90) + '...' : 'Live project telemetry active.'}</p>
+                    <div class="progress-bg">
+                        <div class="progress-fill" style="width: ${pct}%;"></div>
+                    </div>
+                    <div style="display:flex; justify-between; font-size: 0.8rem; color: var(--text-sub);">
+                        <span>$${Number(raised).toLocaleString()} raised</span>
+                        <span style="margin-left: auto;">${pct}%</span>
                     </div>
                 `;
                 container.appendChild(card);
@@ -317,30 +124,15 @@
         }
 
         function renderFallbackProjects() {
-            const fallbackData = [
+            const sample = [
                 { id: "8821", country: "Kenya", title: "Solar Borehole & Clean Water Station #4", funding: 15000, goal: 15000, summary: "Constructing solar-powered clean water access nodes for community health verification." },
                 { id: "9042", country: "Bangladesh", title: "Emergency Medical Relief Kit Distribution", funding: 8200, goal: 10000, summary: "First-aid micro-logistics tracking for local disaster management checkpoints." },
                 { id: "7104", country: "Peru", title: "High-Altitude Reforestation Pipeline", funding: 4500, goal: 12000, summary: "Geotagged sapling planting tracking verified via weekly satellite imagery." }
             ];
-            renderProjects(fallbackData);
+            renderProjects(sample);
         }
 
-        function handleSearch() {
-            const query = document.getElementById('projectSearch').value.toLowerCase();
-            if (!query) {
-                renderProjects(loadedProjects);
-                return;
-            }
-            const filtered = loadedProjects.filter(p => 
-                (p.title && p.title.toLowerCase().includes(query)) ||
-                (p.id && String(p.id).includes(query)) ||
-                (p.country && p.country.toLowerCase().includes(query))
-            );
-            renderProjects(filtered);
-        }
-
-        // Initialize API call on page render
-        window.addEventListener('DOMContentLoaded', fetchLiveProjects);
+        window.addEventListener('DOMContentLoaded', loadProjects);
     </script>
 </body>
 </html>
