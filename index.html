@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraceImpact - Real-Time Micro-Donation Tracking Engine</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        accent: {
+                            50: '#f0f9ff',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .timeline-line::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            bottom: 0;
+            left: 19px;
+            width: 2px;
+            background-color: #e5e7eb;
+            z-index: 0;
+        }
+        .dark .timeline-line::before {
+            background-color: #374151;
+        }
+        /* Pulse Animation for Live Tracking Status */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .pulse-live {
+            animation: pulse-ring 2s infinite ease-in-out;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- TOP ANNOUNCEMENT / ETHICAL SPONSOR BANNER (AD UNIT #1) -->
+    <div id="top-ad-banner" class="bg-emerald-900 text-white text-xs md:text-sm py-2 px-4 flex justify-between items-center transition-all">
+        <div class="max-w-7xl mx-auto flex items-center justify-between w-full">
+            <div class="flex items-center space-x-2 truncate">
+                <span class="bg-emerald-700 text-emerald-100 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Ethical Sponsor</span>
+                <span class="truncate">🌱 <strong>Patagonia Earth Pledge:</strong> Match your verified trace donation this week up to $50!</span>
+            </div>
+            <div class="flex items-center space-x-3 ml-4 flex-shrink-0">
+                <a href="#" onclick="showToast('Sponsor Link Redirect Simulated! +$0.05 Ad Revenue earned'); return false;" class="underline hover:text-emerald-200 font-medium text-xs">Learn More</a>
+                <button onclick="document.getElementById('top-ad-banner').style.display='none'" class="text-emerald-300 hover:text-white">&times;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN NAVBAR -->
+    <header class="sticky top-0 z-40 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-emerald-600 text-white p-2 rounded-xl shadow-md shadow-emerald-500/20 flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="font-extrabold text-xl tracking-tight text-gray-900 dark:text-white">Trace<span class="text-emerald-600 dark:text-emerald-400">Impact</span></span>
+                        <span class="hidden sm:inline-block text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full font-bold ml-2">VERIFIED PROOF ENGINE</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="hidden md:flex items-center space-x-1 lg:space-x-4">
+                    <button onclick="switchTab('tracker')" id="nav-tracker" class="nav-btn px-3 py-2 rounded-lg text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50">
+                        📦 Live Package Tracker
+                    </button>
+                    <button onclick="switchTab('discovery')" id="nav-discovery" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        🌍 Cause Directory
+                    </button>
+                    <button onclick="switchTab('ngo-portal')" id="nav-ngo-portal" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition flex items-center gap-1">
+                        <span>📲 Field Worker Portal</span>
+                        <span class="text-[9px] bg-amber-500 text-white px-1.5 py-0.2 rounded font-bold uppercase">Demo</span>
+                    </button>
+                    <button onclick="switchTab('portfolio')" id="nav-portfolio" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        🏆 Impact Profile
+                    </button>
+                </nav>
+
+                <!-- Search Quick Bar & User Status -->
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleDarkMode()" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    </button>
+
+                    <!-- Quick Track Trigger -->
+                    <div class="relative hidden sm:block">
+                        <input type="text" id="quick-track-input" placeholder="Enter Trace Code (e.g. TRACE-8821)" class="w-48 lg:w-60 text-xs px-3 py-2 pl-8 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 dark:text-white">
+                        <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <button onclick="handleQuickTrack()" class="absolute right-1 top-1 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded font-bold">Track</button>
+                    </div>
+
+                    <button onclick="showDonateModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs md:text-sm px-4 py-2 rounded-xl shadow-lg shadow-emerald-600/30 transition transform hover:-translate-y-0.5">
+                        + Trace & Donate
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Nav Bar -->
+        <div class="flex md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-2 py-2 justify-around text-xs font-semibold">
+            <button onclick="switchTab('tracker')" class="nav-btn-mobile p-2 text-emerald-600 flex flex-col items-center">
+                <span>📦 Track</span>
+            </button>
+            <button onclick="switchTab('discovery')" class="nav-btn-mobile p-2 text-gray-500 flex flex-col items-center">
+                <span>🌍 Causes</span>
+            </button>
+            <button onclick="switchTab('ngo-portal')" class="nav-btn-mobile p-2 text-gray-500 flex flex-col items-center">
+                <span>📲 NGO Portal</span>
+            </button>
+            <button onclick="switchTab('portfolio')" class="nav-btn-mobile p-2 text-gray-500 flex flex-col items-center">
+                <span>🏆 Profile</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN BODY CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ================= TAB 1: LIVE PACKAGE TRACKER ================= -->
+        <div id="tab-tracker" class="tab-content block space-y-6">
+            
+            <!-- Tracking Code Bar & Status Banner -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-2.5 py-1 rounded-full uppercase tracking-wide">Live Trace Status</span>
+                            <span class="text-xs text-gray-400">Updated 12 mins ago</span>
+                        </div>
+                        <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white mt-1" id="current-project-title">Solar Borehole #402: Turkana North</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
+                            <span>📍 Location: <strong class="text-gray-700 dark:text-gray-200" id="current-project-location">Turkana County, Kenya (3.116° N, 35.600° E)</strong></span>
+                            <span class="mx-1">•</span>
+                            <span>Managed by: <strong class="text-emerald-600 dark:text-emerald-400" id="current-project-ngo">CleanWater Global Verified</strong></span>
+                        </p>
+                    </div>
+
+                    <!-- Tracking Search Selector -->
+                    <div class="flex flex-col sm:flex-row items-stretch gap-2 bg-gray-50 dark:bg-gray-900 p-2 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <select id="sample-tracker-select" onchange="loadProjectData(this.value)" class="text-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 font-medium focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <option value="TRACE-8821-X">Trace ID: TRACE-8821-X (Kenya Water Borehole)</option>
+                            <option value="TRACE-9042-W">Trace ID: TRACE-9042-W (Amazon Reforestation Batch)</option>
+                            <option value="TRACE-7711-M">Trace ID: TRACE-7711-M (Syrian Mobile Medical Clinic)</option>
+                        </select>
+                        <button onclick="copyShareLink()" class="px-3 py-2 text-xs bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg font-bold flex items-center justify-center gap-1 hover:bg-emerald-100 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                            Share Trace
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PACKAGE STEP PROGRESS BAR -->
+                <div class="mt-8">
+                    <div class="grid grid-cols-5 text-center text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
+                        <div id="step-lbl-1" class="text-emerald-600 dark:text-emerald-400">1. Micro-Funded</div>
+                        <div id="step-lbl-2" class="text-emerald-600 dark:text-emerald-400">2. Procurement</div>
+                        <div id="step-lbl-3" class="text-emerald-600 dark:text-emerald-400">3. Dispatch & Transit</div>
+                        <div id="step-lbl-4" class="text-emerald-600 dark:text-emerald-400 flex justify-center items-center gap-1">
+                            <span>4. Field Install</span>
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block pulse-live"></span>
+                        </div>
+                        <div id="step-lbl-5" class="text-gray-400">5. Satellite Verified</div>
+                    </div>
+
+                    <!-- Progress Bar Line -->
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 h-3 rounded-full overflow-hidden flex">
+                        <div id="progress-bar-fill" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-500 rounded-full" style="width: 80%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRID CONTAINER: TIMELINE + LIVE VERIFICATION MAP/METRICS -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- LEFT 2 COLS: Visual Package Milestone Timeline -->
+                <div class="lg:col-span-2 space-y-6">
+                    
+                    <!-- Timeline Card -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
+                            <span>📋 Chain of Verification Logs</span>
+                            <span class="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-semibold px-2.5 py-1 rounded-full">Blockchain Timestamped</span>
+                        </h3>
+
+                        <!-- Timeline List -->
+                        <div id="timeline-container" class="relative space-y-6 timeline-line pl-2">
+                            <!-- Injected dynamically via JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Photo Evidence Gallery -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
+                            <span>📸 Field Evidence & Photo Proof</span>
+                            <span class="text-xs text-gray-500">EXIF Metadata Verified</span>
+                        </h3>
+                        <div id="photo-gallery" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <!-- Photo items injected dynamically -->
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT 1 COL: SATELLITE MAP SIMULATOR, METRICS & AD REVENUE PANEL -->
+                <div class="space-y-6">
+                    
+                    <!-- SIMULATED SATELLITE GPS CARD -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 4 4 0 016 0z"/></svg>
+                                Verified GPS Radar & Coordinates
+                            </h4>
+                            <span class="text-[10px] bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded font-mono text-gray-600 dark:text-gray-300">GPS SAFE 256-BIT</span>
+                        </div>
+
+                        <!-- Interactive Canvas GPS Visualization -->
+                        <div class="relative w-full h-52 bg-slate-900 rounded-xl overflow-hidden border border-slate-700 flex flex-col justify-between p-3">
+                            <canvas id="gps-canvas" class="absolute inset-0 w-full h-full opacity-60"></canvas>
+                            
+                            <div class="relative z-10 flex justify-between items-start">
+                                <span class="bg-slate-950/80 text-emerald-400 font-mono text-[10px] px-2 py-1 rounded border border-emerald-500/30">
+                                    LAT: <span id="gps-lat">3.1164</span> | LON: <span id="gps-lon">35.6001</span>
+                                </span>
+                                <span class="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full border border-emerald-400/40 font-bold uppercase tracking-wider flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live Signal
+                                </span>
+                            </div>
+
+                            <div class="relative z-10 bg-slate-950/90 backdrop-blur p-2.5 rounded-lg border border-slate-800 text-xs">
+                                <p class="text-slate-300 text-[11px]" id="gps-location-name">Sub-County Well Station #4 - Turkana North</p>
+                                <div class="flex items-center justify-between text-[10px] text-slate-400 mt-1">
+                                    <span>Precision Radius: &lt; 3 meters</span>
+                                    <button onclick="pingSatellite()" class="text-emerald-400 underline font-bold hover:text-emerald-300">Ping Satellite</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- YOUR SPECIFIC DOLLAR IMPACT BREAKDOWN -->
+                    <div class="bg-gradient-to-br from-emerald-900 to-teal-950 text-white rounded-2xl p-6 shadow-md border border-emerald-700/40 relative overflow-hidden">
+                        <div class="absolute -right-6 -bottom-6 opacity-10 text-emerald-300">
+                            <svg class="w-36 h-36" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        </div>
+                        <h4 class="text-xs uppercase tracking-wider font-bold text-emerald-300 mb-1">Your Direct Contribution Impact</h4>
+                        <div class="text-3xl font-extrabold text-white mb-2" id="user-contribution-amount">$25.00 Micro-Allocation</div>
+                        
+                        <div class="space-y-2 text-xs text-emerald-100 border-t border-emerald-800/80 pt-3">
+                            <div class="flex justify-between">
+                                <span>Purchased Equipment:</span>
+                                <strong class="text-white" id="user-impact-detail font-medium">1x Heavy-Duty Submersible Solar Pump</strong>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Direct Beneficiaries:</span>
+                                <strong class="text-white">~340 Village Residents</strong>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Admin/Tech Fee:</span>
+                                <strong class="text-emerald-400">0.00% (Covered by Ad Revenue)</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AD MONETIZATION DEMO UNIT #2 (Ethical Brand Match) -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-emerald-500/30 relative">
+                        <div class="flex justify-between items-center text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-2">
+                            <span>Sourced Partner Match</span>
+                            <span class="bg-gray-100 dark:bg-gray-700 text-gray-500 px-1.5 py-0.5 rounded">Ad Banner</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 font-extrabold flex items-center justify-center text-xl flex-shrink-0">
+                                ☀️
+                            </div>
+                            <div>
+                                <h5 class="text-sm font-bold text-gray-900 dark:text-white">Goal Zero Portable Solar Panel</h5>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Off-grid gear aligned with clean energy initiatives.</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-center justify-between text-xs pt-3 border-t border-gray-100 dark:border-gray-700">
+                            <span class="text-emerald-600 font-bold dark:text-emerald-400">10% of proceeds fund this cause</span>
+                            <button onclick="showToast('Affiliate Link Tracked! Ad revenue logged.');" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg text-xs">
+                                View Product
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================= TAB 2: CAUSE DIRECTORY / DISCOVERY FEED ================= -->
+        <div id="tab-discovery" class="tab-content hidden space-y-6">
+            
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Discover & Track Verified Projects</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Every project listed provides real-time package tracking IDs upon contribution.</p>
+                </div>
+                
+                <!-- Filter Buttons -->
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <button onclick="filterCauses('all')" class="cause-filter-btn px-3 py-1.5 rounded-lg font-bold bg-emerald-600 text-white">All Causes</button>
+                    <button onclick="filterCauses('water')" class="cause-filter-btn px-3 py-1.5 rounded-lg font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">💧 Water</button>
+                    <button onclick="filterCauses('climate')" class="cause-filter-btn px-3 py-1.5 rounded-lg font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">🌱 Reforestation</button>
+                    <button onclick="filterCauses('health')" class="cause-filter-btn px-3 py-1.5 rounded-lg font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">🏥 Medical</button>
+                </div>
+            </div>
+
+            <!-- PROJECTS GRID -->
+            <div id="cause-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Injected via Javascript dynamically -->
+            </div>
+
+            <!-- AD MONETIZATION DEMO UNIT #3 (Rewarded Video Ad Spot) -->
+            <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 text-white p-6 rounded-2xl shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">
+                        🎬
+                    </div>
+                    <div>
+                        <span class="text-[10px] bg-purple-500/30 text-purple-200 border border-purple-400/30 px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Zero-Dollar Giving</span>
+                        <h4 class="text-base font-bold text-white mt-0.5">Watch a 15-Sec Sponsored Video to Donate $0.25 Free</h4>
+                        <p class="text-xs text-purple-200">Ad sponsors fully cover the micro-donation on your behalf into the active tracking pool.</p>
+                    </div>
+                </div>
+                <button onclick="triggerRewardedAd()" class="w-full md:w-auto bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs px-5 py-3 rounded-xl transition flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-purple-900/50">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    Watch Sponsored Video ($0.25 Impact)
+                </button>
+            </div>
+        </div>
+
+
+        <!-- ================= TAB 3: NGO / FIELD WORKER PORTAL SIMULATOR ================= -->
+        <div id="tab-ngo-portal" class="tab-content hidden space-y-6">
+            
+            <div class="bg-gradient-to-r from-slate-900 to-emerald-950 text-white rounded-2xl p-6 shadow-md border border-slate-800">
+                <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                    <div>
+                        <span class="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">Field Partner Dashboard</span>
+                        <h2 class="text-2xl font-extrabold text-white mt-2">Submit Live Field Checkpoint Update</h2>
+                        <p class="text-xs text-slate-300 mt-1">Simulate how non-profits & field officers post real-time updates directly from the ground.</p>
+                    </div>
+                    <div class="text-right hidden md:block">
+                        <span class="text-xs text-slate-400 block">Logged in as:</span>
+                        <span class="text-sm font-bold text-emerald-400">Field Lead: Sarah Jenkins (CleanWater NGO)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Left 2 Cols: Submit Form -->
+                <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white mb-4">Post Milestone Dispatch Entry</h3>
+                    
+                    <form id="ngo-update-form" onsubmit="handleNGOUpdateSubmit(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Target Tracking Batch</label>
+                                <select id="field-batch-id" class="w-full text-xs p-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-emerald-500">
+                                    <option value="TRACE-8821-X">TRACE-8821-X (Solar Borehole Kenya)</option>
+                                    <option value="TRACE-9042-W">TRACE-9042-W (Amazon Reforestation)</option>
+                                    <option value="TRACE-7711-M">TRACE-7711-M (Mobile Medical Clinic)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Pipeline Milestone Stage</label>
+                                <select id="field-stage-select" class="w-full text-xs p-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-medium focus:ring-2 focus:ring-emerald-500">
+                                    <option value="Stage 2: Equipment Procurement Verified">Stage 2: Equipment Procurement Verified</option>
+                                    <option value="Stage 3: Logistics Transit Checkpoint Passed">Stage 3: Logistics Transit Checkpoint Passed</option>
+                                    <option value="Stage 4: On-Site Field Installation in Progress" selected>Stage 4: On-Site Field Installation in Progress</option>
+                                    <option value="Stage 5: Final Satellite & Operational Sign-off">Stage 5: Final Satellite & Operational Sign-off</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Checkpoint Log Description</label>
+                            <textarea id="field-description" rows="3" required placeholder="Describe what was completed on the ground today..." class="w-full text-xs p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500">Solar arrays mounted successfully. Ground pressure tests passed with zero leaks. Village committee standard training started.</textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">GPS Coordinates (Auto-Tagged)</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="field-gps" value="3.1164° N, 35.6001° E" class="w-full text-xs p-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 font-mono text-gray-700 dark:text-gray-300" readonly>
+                                    <button type="button" onclick="randomizeGPS()" class="px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-xs rounded-lg font-bold">Refresh</button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Upload Photo Evidence</label>
+                                <input type="text" id="field-photo-url" value="https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?w=600&auto=format&fit=crop&q=80" class="w-full text-xs p-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500" placeholder="Image URL">
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex justify-end">
+                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-6 py-3 rounded-xl shadow-md transition flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                Broadcast Live Checkpoint Log
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right Col: Field Worker Guidelines & Active Streams -->
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-1.5">
+                            <span>🛡️ Trace Integrity Protocol</span>
+                        </h4>
+                        <ul class="text-xs text-gray-600 dark:text-gray-300 space-y-2 list-disc pl-4">
+                            <li>All photo uploads undergo automatic EXIF geo-timestamp validation.</li>
+                            <li>Updates trigger instant push notifications to all backing donors.</li>
+                            <li>Third-party satellite imagery automatically cross-checks ground installs within 48 hours.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Live NGO Stats -->
+                    <div class="bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl p-5 border border-emerald-200 dark:border-emerald-800">
+                        <div class="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase">Field Unit #104 Active Status</div>
+                        <div class="mt-3 space-y-2 text-xs">
+                            <div class="flex justify-between text-gray-700 dark:text-gray-300">
+                                <span>Donors Subscribed:</span>
+                                <span class="font-bold">1,420 Live Users</span>
+                            </div>
+                            <div class="flex justify-between text-gray-700 dark:text-gray-300">
+                                <span>Total Verification Score:</span>
+                                <span class="font-bold text-emerald-600 dark:text-emerald-400">99.4% (Grade A+)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- ================= TAB 4: DONOR IMPACT PORTFOLIO ================= -->
+        <div id="tab-portfolio" class="tab-content hidden space-y-6">
+            
+            <!-- User Profile Summary Header -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white font-extrabold text-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                        JD
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-xl font-extrabold text-gray-900 dark:text-white">Jane Doe</h2>
+                            <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-300">⭐ Verified Impact Hero</span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Member since Oct 2024 • 12 Verified Micro-Projects Backed</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="downloadCertificate()" class="bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-emerald-100 transition flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Download PDF Certificate
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Micro-Donated</div>
+                    <div class="text-2xl font-extrabold text-gray-900 dark:text-white mt-1">$145.00</div>
+                    <div class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1">100% verified footprint</div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Lives Directly Impacted</div>
+                    <div class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">1,840 People</div>
+                    <div class="text-[10px] text-gray-400 mt-1">Across Kenya & Amazon Basin</div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Verification Rating</div>
+                    <div class="text-2xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">100% Valid</div>
+                    <div class="text-[10px] text-gray-400 mt-1">Zero unverified gaps</div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Ad-Funded Micro Bonus</div>
+                    <div class="text-2xl font-extrabold text-purple-600 dark:text-purple-400 mt-1">$12.50</div>
+                    <div class="text-[10px] text-purple-500 mt-1">Earned by watching sponsored ads</div>
+                </div>
+            </div>
+
+            <!-- Active Backed Traces Table -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Your Active Trace Packages</h3>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-gray-50 dark:bg-gray-900 text-gray-500 uppercase">
+                            <tr>
+                                <th class="p-3 rounded-l-lg">Tracking Code</th>
+                                <th class="p-3">Project Title</th>
+                                <th class="p-3">Your Allocation</th>
+                                <th class="p-3">Current Status</th>
+                                <th class="p-3 rounded-r-lg text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                            <tr>
+                                <td class="p-3 font-mono font-bold text-emerald-600 dark:text-emerald-400">TRACE-8821-X</td>
+                                <td class="p-3 font-semibold text-gray-800 dark:text-gray-200">Solar Borehole #402: Turkana</td>
+                                <td class="p-3">$25.00 (1 Solar Pump)</td>
+                                <td class="p-3"><span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Stage 4: Installation</span></td>
+                                <td class="p-3 text-right">
+                                    <button onclick="loadProjectData('TRACE-8821-X'); switchTab('tracker');" class="text-emerald-600 hover:underline font-bold">Track & View Log &rarr;</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-mono font-bold text-emerald-600 dark:text-emerald-400">TRACE-9042-W</td>
+                                <td class="p-3 font-semibold text-gray-800 dark:text-gray-200">Amazon Reforestation Batch #88</td>
+                                <td class="p-3">$40.00 (80 Native Saplings)</td>
+                                <td class="p-3"><span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Stage 5: Satellite Verified</span></td>
+                                <td class="p-3 text-right">
+                                    <button onclick="loadProjectData('TRACE-9042-W'); switchTab('tracker');" class="text-emerald-600 hover:underline font-bold">Track & View Log &rarr;</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-mono font-bold text-emerald-600 dark:text-emerald-400">TRACE-7711-M</td>
+                                <td class="p-3 font-semibold text-gray-800 dark:text-gray-200">Syrian Refugee Mobile Health Unit</td>
+                                <td class="p-3">$80.00 (First Aid Supplies)</td>
+                                <td class="p-3"><span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Stage 3: Transit Checkpoint</span></td>
+                                <td class="p-3 text-right">
+                                    <button onclick="loadProjectData('TRACE-7711-M'); switchTab('tracker');" class="text-emerald-600 hover:underline font-bold">Track & View Log &rarr;</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER & AD REVENUE TRANSPARENCY DISCLAIMER -->
+    <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-12 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-gray-500 dark:text-gray-400 space-y-4">
+            <div class="flex justify-center items-center space-x-6 font-semibold">
+                <a href="#" onclick="switchTab('tracker'); return false;" class="hover:text-emerald-600">Package Tracker</a>
+                <a href="#" onclick="switchTab('discovery'); return false;" class="hover:text-emerald-600">Cause Directory</a>
+                <a href="#" onclick="switchTab('ngo-portal'); return false;" class="hover:text-emerald-600">NGO Partner Portal</a>
+                <a href="#" onclick="switchTab('portfolio'); return false;" class="hover:text-emerald-600">Donor Portfolio</a>
+            </div>
+            
+            <p class="max-w-xl mx-auto">
+                <strong>TraceImpact Platform Revenue Model:</strong> 100% of donor funds directly reach field operations. Platform operation, verification tech, and mobile app expansions are funded exclusively via non-intrusive ethical ads and brand partnerships.
+            </p>
+
+            <p>© 2026 TraceImpact Inc. All rights reserved. Registered Transparency Protocol.</p>
+        </div>
+    </footer>
+
+
+    <!-- MODAL: DONATE & GENERATE TRACE ID -->
+    <div id="donate-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700 relative animate-fade-in">
+            <button onclick="closeDonateModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+            
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold mb-2">📦</div>
+                <h3 class="text-xl font-extrabold text-gray-900 dark:text-white">Fund a Micro-Batch</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Receive an instant Trace Tracking Code for live GPS field updates.</p>
+            </div>
+
+            <form onsubmit="handleDonateSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Select Verified Cause</label>
+                    <select id="modal-cause-select" class="w-full text-xs p-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-medium">
+                        <option value="Solar Borehole Kenya">Solar Borehole #402 (Kenya)</option>
+                        <option value="Amazon Reforestation">Amazon Rainforest Sapling Batch #88</option>
+                        <option value="Syrian Mobile Clinic">Syrian Mobile Refugee Medical Unit</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Micro-Donation Amount ($USD)</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" onclick="setDonateAmount(10)" class="donate-amt-btn border border-gray-300 dark:border-gray-700 py-2 rounded-xl text-xs font-bold hover:border-emerald-500">$10</button>
+                        <button type="button" onclick="setDonateAmount(25)" class="donate-amt-btn border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 py-2 rounded-xl text-xs font-bold">$25</button>
+                        <button type="button" onclick="setDonateAmount(50)" class="donate-amt-btn border border-gray-300 dark:border-gray-700 py-2 rounded-xl text-xs font-bold hover:border-emerald-500">$50</button>
+                        <button type="button" onclick="setDonateAmount(100)" class="donate-amt-btn border border-gray-300 dark:border-gray-700 py-2 rounded-xl text-xs font-bold hover:border-emerald-500">$100</button>
+                    </div>
+                    <input type="number" id="custom-donate-amt" value="25" min="1" class="w-full mt-2 text-xs p-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-bold">
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-900 p-3 rounded-xl border border-gray-200 dark:border-gray-700 text-[11px] text-gray-500 dark:text-gray-400">
+                    <div class="flex justify-between font-semibold text-gray-700 dark:text-gray-300">
+                        <span>Platform Fee:</span>
+                        <span class="text-emerald-600">$0.00 (Ad Supported)</span>
+                    </div>
+                    <div class="flex justify-between mt-1">
+                        <span>Trace Tracking Code:</span>
+                        <span class="font-mono text-emerald-600 font-bold">Auto-Generated</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-3 rounded-xl shadow-lg shadow-emerald-600/30 transition">
+                    Confirm & Track My Impact &rarr;
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- MODAL: REWARDED VIDEO AD SIMULATION -->
+    <div id="ad-video-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-900 text-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-700 text-center relative">
+            <div class="text-xs font-bold text-purple-400 uppercase tracking-widest mb-2">Sponsored Ad Partnership</div>
+            <h3 class="text-lg font-extrabold mb-4">Watching Video for Sponsor Micro-Fund...</h3>
+            
+            <!-- Video Player Simulation Canvas -->
+            <div class="w-full h-48 bg-slate-950 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden border border-gray-800">
+                <div class="text-4xl mb-2 animate-bounce">🌱</div>
+                <div class="text-sm font-bold text-gray-200">EcoClean Water Solutions</div>
+                <div class="text-xs text-purple-300 mt-1">"100% Recyclable Water Filtration Technology"</div>
+                
+                <!-- Countdown Overlay -->
+                <div class="absolute bottom-3 right-3 bg-black/70 px-3 py-1 rounded-full text-xs font-mono text-emerald-400 font-bold border border-emerald-500/30">
+                    Reward in: <span id="ad-countdown">5</span>s
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-400 mt-4">Once complete, $0.25 will be automatically injected into the Turkana Borehole Batch on your behalf.</p>
+        </div>
+    </div>
+
+
+    <!-- TOAST NOTIFICATIONS CONTAINER -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+
+    <!-- JAVASCRIPT LOGIC & DATA ENGINE -->
+    <script>
+        // DATA STORE FOR SAMPLE TRACE PACKAGES
+        const TRACE_DATA = {
+            'TRACE-8821-X': {
+                id: 'TRACE-8821-X',
+                title: 'Solar Borehole #402: Turkana North',
+                category: 'water',
+                location: 'Turkana County, Kenya (3.116° N, 35.600° E)',
+                ngo: 'CleanWater Global Verified',
+                progressPercent: 80,
+                currentStage: 4,
+                lat: 3.1164,
+                lon: 35.6001,
+                contributionAmount: '$25.00 Micro-Allocation',
+                impactDetail: '1x Heavy-Duty Submersible Solar Pump',
+                timeline: [
+                    {
+                        stage: 'Stage 4: Field Installation',
+                        date: 'Today, 08:45 AM',
+                        status: 'in-progress',
+                        title: 'Solar Pump Array Mounted & Calibrated',
+                        desc: 'Field engineers successfully mounted the 320W solar array. Ground water extraction tests began with clean yield verified.',
+                        by: 'Officer S. Jenkins'
+                    },
+                    {
+                        stage: 'Stage 3: Transit Checkpoint',
+                        date: 'Nov 2, 2026',
+                        status: 'completed',
+                        title: 'Customs Clear & Regional Dispatch',
+                        desc: 'Truck Convoy #04 safely arrived at Lodwar depot. All pipes and deep-drilling bits passed quality inspection.',
+                        by: 'Logistics Team East Africa'
+                    },
+                    {
+                        stage: 'Stage 2: Equipment Procurement',
+                        date: 'Oct 28, 2026',
+                        status: 'completed',
+                        title: 'Submersible Pump Batch Purchased',
+                        desc: 'Funds allocated directly to Grundfos Certified Supplier order #99402.',
+                        by: 'CleanWater Finance Engine'
+                    },
+                    {
+                        stage: 'Stage 1: Micro-Funded',
+                        date: 'Oct 25, 2026',
+                        status: 'completed',
+                        title: 'Batch Target Reached',
+                        desc: '120 micro-donors pooled $3,500 total to fund Turkana Borehole #402.',
+                        by: 'TraceImpact Automated Vault'
+                    }
+                ],
+                photos: [
+                    { url: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?w=600&auto=format&fit=crop&q=80', caption: 'Solar panel array setup on site' },
+                    { url: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?w=600&auto=format&fit=crop&q=80', caption: 'Clean water test flow output' },
+                    { url: 'https://images.unsplash.com/photo-1594398901394-4e34939a4fd0?w=600&auto=format&fit=crop&q=80', caption: 'Local community assembly inspects well' }
+                ]
+            },
+            'TRACE-9042-W': {
+                id: 'TRACE-9042-W',
+                title: 'Amazon Reforestation Batch #88',
+                category: 'climate',
+                location: 'Madre de Dios, Peru (-12.593° S, -69.189° W)',
+                ngo: 'Rainforest Rescue International',
+                progressPercent: 100,
+                currentStage: 5,
+                lat: -12.5931,
+                lon: -69.1892,
+                contributionAmount: '$40.00 Micro-Allocation',
+                impactDetail: '80 Native Saplings Planted & Tagged',
+                timeline: [
+                    {
+                        stage: 'Stage 5: Satellite Verified',
+                        date: 'Yesterday',
+                        status: 'completed',
+                        title: 'Sentinel-2 Satellite Canopy Audit Complete',
+                        desc: 'Multispectral satellite imaging confirmed high vegetation index (NDVI 0.82) over designated 5-acre sector.',
+                        by: 'TraceImpact Earth Observation API'
+                    },
+                    {
+                        stage: 'Stage 4: Field Installation',
+                        date: 'Oct 14, 2026',
+                        status: 'completed',
+                        title: '80 Saplings Planted in Soil Sector B',
+                        desc: 'Native Brazil nut & Mahogany saplings planted with organic compost mycorrhizal shield.',
+                        by: 'Indigenous Field Guardians'
+                    },
+                    {
+                        stage: 'Stage 1: Micro-Funded',
+                        date: 'Oct 01, 2026',
+                        status: 'completed',
+                        title: 'Reforestation Batch #88 Funded',
+                        desc: 'Batch locked and assigned to nursery propagation unit.',
+                        by: 'TraceImpact Automated Vault'
+                    }
+                ],
+                photos: [
+                    { url: 'https://images.unsplash.com/photo-1511497584788-8767611136f6?w=600&auto=format&fit=crop&q=80', caption: 'Dense rainforest canopy plot' },
+                    { url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80', caption: 'Sapling nursery growth phase' }
+                ]
+            },
+            'TRACE-7711-M': {
+                id: 'TRACE-7711-M',
+                title: 'Syrian Mobile Refugee Medical Clinic',
+                category: 'health',
+                location: 'Idlib Region, Syria (35.930° N, 36.630° E)',
+                ngo: 'Doctors Without Borders Partner',
+                progressPercent: 60,
+                currentStage: 3,
+                lat: 35.9304,
+                lon: 36.6305,
+                contributionAmount: '$80.00 Micro-Allocation',
+                impactDetail: 'Emergency First-Aid & Insulin Kits',
+                timeline: [
+                    {
+                        stage: 'Stage 3: Transit Checkpoint',
+                        date: '2 Days Ago',
+                        status: 'in-progress',
+                        title: 'Cold-Chain Insulin Storage Transiting Border',
+                        desc: 'Temperature sensors log stable 4°C environment during transport across safe corridor.',
+                        by: 'Medical Logistics Officer'
+                    },
+                    {
+                        stage: 'Stage 2: Equipment Procurement',
+                        date: 'Oct 20, 2026',
+                        status: 'completed',
+                        title: 'Essential Pharmaceuticals Secured',
+                        desc: 'Wholesale medical supplies packed and sealed with tamper-evident RFID tags.',
+                        by: 'Central Pharmacy Hub'
+                    }
+                ],
+                photos: [
+                    { url: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=600&auto=format&fit=crop&q=80', caption: 'Medical inventory verification' }
+                ]
+            }
+        };
+
+        const CAUSES_DIRECTORY = [
+            { id: 'TRACE-8821-X', title: 'Solar Water Borehole #402', cat: 'water', loc: 'Turkana, Kenya', goal: 3500, raised: 2800, img: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?w=600&auto=format&fit=crop&q=80' },
+            { id: 'TRACE-9042-W', title: 'Amazon Canopy Reforestation', cat: 'climate', loc: 'Madre de Dios, Peru', goal: 5000, raised: 5000, img: 'https://images.unsplash.com/photo-1511497584788-8767611136f6?w=600&auto=format&fit=crop&q=80' },
+            { id: 'TRACE-7711-M', title: 'Mobile Urgent Health Unit', cat: 'health', loc: 'Idlib, Syria', goal: 8000, raised: 4800, img: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=600&auto=format&fit=crop&q=80' }
+        ];
+
+        let currentActiveProject = TRACE_DATA['TRACE-8821-X'];
+
+        // INITIALIZATION
+        window.onload = function() {
+            loadProjectData('TRACE-8821-X');
+            renderCauseDirectory('all');
+            initGPSRadarCanvas();
+        };
+
+        // TAB SWITCHING SYSTEM
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+
+            // Nav highlight state
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = 'nav-btn px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition';
+            });
+            const activeNav = document.getElementById('nav-' + tabName);
+            if(activeNav) {
+                activeNav.className = 'nav-btn px-3 py-2 rounded-lg text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50';
+            }
+        }
+
+        // LOAD PROJECT DATA INTO TRACKER VIEW
+        function loadProjectData(traceId) {
+            const data = TRACE_DATA[traceId];
+            if (!data) return;
+
+            currentActiveProject = data;
+
+            // Update Titles & Info
+            document.getElementById('current-project-title').innerText = data.title;
+            document.getElementById('current-project-location').innerText = data.location;
+            document.getElementById('current-project-ngo').innerText = data.ngo;
+            document.getElementById('user-contribution-amount').innerText = data.contributionAmount;
+            document.getElementById('user-impact-detail font-medium').innerText = data.impactDetail;
+            document.getElementById('gps-lat').innerText = data.lat;
+            document.getElementById('gps-lon').innerText = data.lon;
+            document.getElementById('gps-location-name').innerText = data.title + ' - Base Coordinates';
+
+            // Progress Bar Update
+            document.getElementById('progress-bar-fill').style.width = data.progressPercent + '%';
+
+            // Stage Labels Highlight
+            for (let i = 1; i <= 5; i++) {
+                const lbl = document.getElementById('step-lbl-' + i);
+                if (i <= data.currentStage) {
+                    lbl.className = 'text-emerald-600 dark:text-emerald-400 font-bold';
+                } else {
+                    lbl.className = 'text-gray-400 font-normal';
+                }
+            }
+
+            // Render Timeline Logs
+            const timelineContainer = document.getElementById('timeline-container');
+            timelineContainer.innerHTML = '';
+            
+            data.timeline.forEach((item, index) => {
+                const isLatest = index === 0;
+                const nodeHtml = `
+                    <div class="relative flex items-start space-x-4 z-10">
+                        <div class="w-9 h-9 rounded-full ${isLatest ? 'bg-emerald-600 text-white ring-4 ring-emerald-100 dark:ring-emerald-950' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'} flex items-center justify-center font-bold text-xs flex-shrink-0">
+                            ${isLatest ? '⚡' : '✓'}
+                        </div>
+                        <div class="flex-grow bg-gray-50 dark:bg-gray-900/60 p-4 rounded-xl border ${isLatest ? 'border-emerald-300 dark:border-emerald-700 shadow-sm' : 'border-gray-200 dark:border-gray-700'}">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                <span class="text-xs font-bold ${isLatest ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500'} uppercase tracking-wide">${item.stage}</span>
+                                <span class="text-[11px] text-gray-400">${item.date}</span>
+                            </div>
+                            <h4 class="text-sm font-bold text-gray-900 dark:text-white mt-1">${item.title}</h4>
+                            <p class="text-xs text-gray-600 dark:text-gray-300 mt-1">${item.desc}</p>
+                            <div class="mt-2 text-[10px] text-gray-400 flex items-center gap-1">
+                                <span>Verified Officer: <strong>${item.by}</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                timelineContainer.innerHTML += nodeHtml;
+            });
+
+            // Render Photo Evidence
+            const photoGallery = document.getElementById('photo-gallery');
+            photoGallery.innerHTML = '';
+            data.photos.forEach(photo => {
+                photoGallery.innerHTML += `
+                    <div class="group relative rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <img src="${photo.url}" alt="Evidence" class="w-full h-32 object-cover group-hover:scale-105 transition duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90 p-2.5 flex flex-col justify-end">
+                            <span class="text-[10px] font-bold text-emerald-300 uppercase">GPS Verified Image</span>
+                            <span class="text-xs text-white font-medium truncate">${photo.caption}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // RENDER CAUSE DIRECTORY GRID
+        function renderCauseDirectory(filter) {
+            const grid = document.getElementById('cause-grid');
+            grid.innerHTML = '';
+            
+            CAUSES_DIRECTORY.forEach(item => {
+                if (filter !== 'all' && item.cat !== filter) return;
+
+                const percent = Math.round((item.raised / item.goal) * 100);
+                grid.innerHTML += `
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-between hover:shadow-md transition">
+                        <div>
+                            <div class="relative h-40 overflow-hidden">
+                                <img src="${item.img}" class="w-full h-full object-cover">
+                                <span class="absolute top-3 left-3 bg-slate-900/80 text-emerald-400 text-[10px] font-mono px-2 py-1 rounded font-bold">
+                                    ID: ${item.id}
+                                </span>
+                            </div>
+                            <div class="p-5">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">${item.loc}</span>
+                                <h3 class="text-base font-bold text-gray-900 dark:text-white mt-0.5">${item.title}</h3>
+                                
+                                <div class="mt-4">
+                                    <div class="flex justify-between text-xs font-semibold mb-1">
+                                        <span class="text-gray-500">$${item.raised} raised</span>
+                                        <span class="text-emerald-600">${percent}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+                                        <div class="bg-emerald-500 h-full" style="width: ${percent}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-5 pt-0 flex gap-2">
+                            <button onclick="loadProjectData('${item.id}'); switchTab('tracker');" class="flex-1 text-xs border border-emerald-600 text-emerald-600 dark:text-emerald-400 font-bold py-2.5 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition">
+                                🔍 Track Package
+                            </button>
+                            <button onclick="openDonateModalFor('${item.title}')" class="flex-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-md transition">
+                                + Support
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterCauses(cat) {
+            document.querySelectorAll('.cause-filter-btn').forEach(b => {
+                b.className = 'cause-filter-btn px-3 py-1.5 rounded-lg font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300';
+            });
+            event.target.className = 'cause-filter-btn px-3 py-1.5 rounded-lg font-bold bg-emerald-600 text-white';
+            renderCauseDirectory(cat);
+        }
+
+        // QUICK TRACK INPUT HANDLER
+        function handleQuickTrack() {
+            const input = document.getElementById('quick-track-input').value.trim().toUpperCase();
+            if (TRACE_DATA[input]) {
+                loadProjectData(input);
+                switchTab('tracker');
+                showToast(`Loaded live package log for ${input}`);
+            } else {
+                showToast('Trace ID not found. Loaded demo package TRACE-8821-X', 'info');
+                loadProjectData('TRACE-8821-X');
+                switchTab('tracker');
+            }
+        }
+
+        // NGO UPDATE FORM SUBMISSION
+        function handleNGOUpdateSubmit(e) {
+            e.preventDefault();
+            const batchId = document.getElementById('field-batch-id').value;
+            const stage = document.getElementById('field-stage-select').value;
+            const desc = document.getElementById('field-description').value;
+            const photoUrl = document.getElementById('field-photo-url').value;
+
+            if (TRACE_DATA[batchId]) {
+                TRACE_DATA[batchId].timeline.unshift({
+                    stage: stage,
+                    date: 'Just Now (Simulated Live)',
+                    status: 'in-progress',
+                    title: 'Live Field Update Logged',
+                    desc: desc,
+                    by: 'Field Partner (Verified Device)'
+                });
+
+                if (photoUrl) {
+                    TRACE_DATA[batchId].photos.unshift({
+                        url: photoUrl,
+                        caption: 'Live Field Dispatch Upload'
+                    });
+                }
+
+                loadProjectData(batchId);
+                switchTab('tracker');
+                showToast(`🚀 Field update dispatched to ${batchId}! Donors notified.`);
+            }
+        }
+
+        // GPS CANVAS RADAR ANIMATION
+        function initGPSRadarCanvas() {
+            const canvas = document.getElementById('gps-canvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let angle = 0;
+
+            function resizeCanvas() {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            function drawRadar() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const radius = Math.min(centerX, centerY) - 10;
+
+                // Draw concentric circles
+                ctx.strokeStyle = 'rgba(34, 197, 94, 0.2)';
+                ctx.lineWidth = 1;
+                for (let r = 20; r <= radius; r += 30) {
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Sweeping line
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + 0.3);
+                ctx.lineTo(centerX, centerY);
+                ctx.fillStyle = 'rgba(34, 197, 94, 0.15)';
+                ctx.fill();
+
+                // Blip Target Point
+                ctx.beginPath();
+                ctx.arc(centerX + 25, centerY - 15, 4, 0, Math.PI * 2);
+                ctx.fillStyle = '#22c55e';
+                ctx.fill();
+
+                angle += 0.03;
+                requestAnimationFrame(drawRadar);
+            }
+            drawRadar();
+        }
+
+        function pingSatellite() {
+            showToast('📡 Satellite Ping Sent! Coordinate accuracy verified at 99.8%.');
+        }
+
+        function randomizeGPS() {
+            const lat = (Math.random() * (10 - 1) + 1).toFixed(4);
+            const lon = (Math.random() * (40 - 30) + 30).toFixed(4);
+            document.getElementById('field-gps').value = `${lat}° N, ${lon}° E`;
+            showToast('GPS coordinates updated via device hardware sensor.');
+        }
+
+        // MODALS & DONATIONS
+        function showDonateModal() {
+            document.getElementById('donate-modal').classList.remove('hidden');
+        }
+
+        function openDonateModalFor(title) {
+            showDonateModal();
+        }
+
+        function closeDonateModal() {
+            document.getElementById('donate-modal').classList.add('hidden');
+        }
+
+        function setDonateAmount(amt) {
+            document.getElementById('custom-donate-amt').value = amt;
+        }
+
+        function handleDonateSubmit(e) {
+            e.preventDefault();
+            const cause = document.getElementById('modal-cause-select').value;
+            const amt = document.getElementById('custom-donate-amt').value;
+            const generatedCode = 'TRACE-' + Math.floor(1000 + Math.random() * 9000) + '-NEW';
+            
+            closeDonateModal();
+            showToast(`🎉 Success! $${amt} donated to ${cause}. Tracking ID: ${generatedCode}`);
+        }
+
+        // AD REWARDED VIDEO SIMULATOR
+        function triggerRewardedAd() {
+            const modal = document.getElementById('ad-video-modal');
+            const countdownEl = document.getElementById('ad-countdown');
+            modal.classList.remove('hidden');
+            let seconds = 5;
+            countdownEl.innerText = seconds;
+
+            const timer = setInterval(() => {
+                seconds--;
+                countdownEl.innerText = seconds;
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                    modal.classList.add('hidden');
+                    showToast('🎁 Sponsored Ad Complete! $0.25 added to Turkana Borehole batch on your behalf!');
+                }
+            }, 1000);
+        }
+
+        // UTILITY: TOAST NOTIFICATION
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-3 rounded-xl text-xs font-bold text-white shadow-2xl transition transform translate-y-2 duration-300 flex items-center space-x-2 pointer-events-auto ${type === 'success' ? 'bg-emerald-600' : 'bg-slate-800'}`;
+            toast.innerHTML = `<span>${type === 'success' ? '✓' : 'ℹ'}</span> <span>${msg}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function copyShareLink() {
+            const textToCopy = `Track my direct micro-impact on TraceImpact: ${currentActiveProject.id} (${currentActiveProject.title})`;
+            const tempInput = document.createElement("input");
+            tempInput.value = textToCopy;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            showToast('📋 Trace share link copied to clipboard!');
+        }
+
+        function downloadCertificate() {
+            showToast('📄 Verified Impact Certificate PDF generated & downloaded!');
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const sun = document.getElementById('sun-icon');
+            const moon = document.getElementById('moon-icon');
+            sun.classList.toggle('hidden');
+            moon.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
